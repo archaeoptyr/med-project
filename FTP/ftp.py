@@ -2,17 +2,18 @@ from ftplib import FTP
 import time
 
 ftp = ""
-hostname = "localhost"
-username = "fileDoctor"
-password = "Pa$$w0rd"
+hostname = input("Enter Hostname: ")
+username = input("Enter Username: ")
+password = input("Enter Password: ")
 
 def connect_ftp(hostname, username, password):
     try:
         global ftp
         ftp = FTP(hostname)
         ftp.login(username, password)
-
-        print("Connected to: ", hostname)
+    
+        print("Connected to: " + hostname)
+        
     except:
         print("Unable to connect")
         print("\nClosing in 5 seconds")
@@ -69,6 +70,7 @@ while True:
         elif command == "exit":
             ftp.quit()
             print("Server disconnected")
+            print()
             break
 
         
