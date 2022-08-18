@@ -1,7 +1,6 @@
 #test functions taking the same user input as the real things,
 #with a way to throw exceptions to test the GUI's functionality
-import argparse
-
+"""
 def connect_ftp(hostname, username, password):
 
     try:
@@ -13,37 +12,42 @@ def connect_ftp(hostname, username, password):
     except:
         print("shit's bonked")
 
-def main():
-        global args
-        parser = argparse.ArgumentParser(description="A CLI FTP Client")
+"""
+from genericpath import isfile
+from ftplib import FTP
+import time
+import os
+import datetime
 
-        parser.add_argument("-hn", "--hostname", 
-                            type = str, 
-                            nargs = 1,  
-                            metavar = "hostname", 
-                            help = "Hostname of FTP server")
+ftp = None
 
-        parser.add_argument("-u", "--username", 
-                            type = str, 
-                            nargs = 1,  
-                            metavar = "username", 
-                            help = "Username to connect to FTP")
+def connect_ftp(hostname, username, password):
+    try:
+        global ftp
+        
+        #Creates a socket to connect to FTP server
+        ftp = FTP(hostname)
+        ftp.login(username, password)
 
-        parser.add_argument("-p,", "--password", 
-                            type = str, 
-                            nargs = 1,  
-                            metavar = "password", 
-                            help = "Password to connect to FTP")
-
-        parser.add_argument("-s,", "--schedule", 
-                            type = str, 
-                            nargs = 2,  
-                            metavar = "date_time", 
-                            help = "Specify the date and time to download the file as DD-MM-YYYY HH:MM:SS")
+        print("Connected")
+        
+    except:
+        print("Unable to connect")
 
 
-        args = parser.parse_args()
+def download_file(date, time):
+    #reformats date and time to match csv files
+    final = date + " " + time
+    final = datetime.datetime.strptime(final, "%d-%m-%Y %H:%M:%S").strftime("%Y%m%d%H%M%S")
+    filename = "MED_DATA_" + final + ".csv"
 
+    #Downloads File    
+    with open(filename, "wb") as f:
+        ftp.retrbinary("RETR " + filename, f.write)
+        print("Successfully downloaded " + filename)
 
-if __name__ == "__main__":
-    main()
+def download_file_today(datestring):
+    #reformat datestring
+    #tests
+    print("wheeeeee")
+    
