@@ -4,7 +4,7 @@ import pickle
 from ftplib import FTP
 import time
 import os
-import datetime
+from datetime import datetime
 
 ftp = None
 
@@ -34,9 +34,9 @@ def keep_conn(cred):
 
 def conn_exists():
     #Checks if the pickle file exists 
-    if os.path.isfile("/Users/arangill/Desktop/ftp_conn.obj"):
-        if os.path.getsize("/Users/arangill/Desktop/ftp_conn.obj") > 0:      
-            open_conn = open('/Users/arangill/Desktop/ftp_conn.obj', 'rb') 
+    if os.path.isfile("ftp_conn.obj"):
+        if os.path.getsize("ftp_conn.obj") > 0:      
+            open_conn = open("ftp_conn.obj", 'rb') 
             conn = pickle.load(open_conn)
 
             #Connects to FTP using creds from pickle
@@ -49,17 +49,28 @@ def conn_exists():
     #If file does not exist
     return False
 
+def format_datetime(date, time):
+    date_time = date + " " + time
+    date_time = datetime.strptime(date_time, "%d-%m-%Y %H:%M:%S").strftime("%Y%m%d%H%M%S")
+    return date_time
+
+def format_date(date):
+    format_date = datetime.strptime(date, "%Y-%m-%d").strftime("%Y%m%d")
+    return format_date
+
 def download_file(date, time):
     #reformats date and time to match csv files
-    final = date + " " + time
-    final = datetime.datetime.strptime(final, "%d-%m-%Y %H:%M:%S").strftime("%Y%m%d%H%M%S")
-    filename = "MED_DATA_" + final + ".csv"
+    date_time = format_datetime(date, time)
+    filename = "MED_DATA_" + date_time + ".csv"
 
     #Downloads File    
     with open(filename, "wb") as f:
         ftp.retrbinary("RETR " + filename, f.write)
         print("Successfully downloaded " + filename)
     
+def download_file_default(date_now):
+    date = format_date(date_now)
+    print(date)
     
 def main():
         global args
@@ -85,10 +96,16 @@ def main():
 
         parser.add_argument("-s,", "--schedule", 
                             type = str, 
-                            nargs = 2,  
+                            nargs = "*",  
+                            metavar = "date", 
+                            help = "Specify the date and time to download the file as DD-MM-YYYY HH:MM:SS")
+        """
+        parser.add_argument("-s,", "--schedule", 
+                            type = str, 
+                            nargs = '',  
                             metavar = "date_time", 
                             help = "Specify the date and time to download the file as DD-MM-YYYY HH:MM:SS")
-
+        """
 
         args = parser.parse_args()
 
@@ -101,8 +118,15 @@ def main():
             connect_ftp(args.hostname[0], args.username[0], args.password[0])
         
         #If user has entered data for schedule
-        if args.schedule != None:
+        if args.schedule != None and len(args.schedule) == 2:
             download_file(args.schedule[0], args.schedule[1])
+
+        elif args.schedule != None and len(args.schedule) == 0:
+            current_date_time = str(datetime.now())
+            current_date_time = current_date_time[:10]
+
+            download_file_default(current_date_time)
+            
 
 
 if __name__ == "__main__":
