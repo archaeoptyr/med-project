@@ -51,12 +51,6 @@ def change_directory(new_directory):
     print("Changed to " + print_directory())
 
 
-def os_check(filename):
-    # Checks users operating system and calls methods depending on said OS
-    if sys.platform == "win32":
-        windows_file_download(filename)
-
-
 def date_time():
     print("-Enter date and time of CSV file in the format: YYYY-MM-DD HH:MM:SS")
 
@@ -83,9 +77,13 @@ def windows_file_download(filename):
         month_param = schedule_command.split()[3]
 
         # Creates a subprocess which runs a powershell.exe and calls a script that creates a task Schedular for the scheduled_Download.py
-        p = subprocess.Popen(["powershell.exe", "$Action = (New-ScheduledTaskAction -Execute "
-                                                "'powershell.exe' -Argument 'python " + dir_path + "\scheduled_Download.py " + hostname + " " + username + " " + password + " " + filename_param + "')\n $Trigger = "
-                                                                                                                                                                                                   "New-ScheduledTaskTrigger -Once -At \"" + month_param.strip() + "/" + day_param.strip() + "/" + "2022" + " " + time_param.strip() + " " + AMPM_param.strip() + "\"\n  Register-ScheduledTask -TaskName \"Scheduled CSV Download " + day_param + month_param + "\" -Trigger $Trigger -Action $Action -RunLevel Highest –Force"],
+        p = subprocess.Popen([
+            "powershell.exe",
+            "$Action = (New-ScheduledTaskAction -Execute 'powershell.exe' "
+            "-Argument 'python " + dir_path + "\scheduled_Download.py " + hostname + " " + username + " " +
+            password + " " + filename_param + "')\n "
+            "$Trigger = New-ScheduledTaskTrigger -Once -At \"" + month_param.strip() + "/" + day_param.strip() + "/" + "2022" + " " + time_param.strip() + " " + AMPM_param.strip() + "\"\n"
+            "Register-ScheduledTask -TaskName \"Scheduled CSV Download " + day_param + month_param + "\" -Trigger $Trigger -Action $Action -RunLevel Highest –Force"],
                              stdout=sys.stdout)
         p.communicate()
 
@@ -103,7 +101,7 @@ def run_commands():
         try:
             if command == "set_download":
                 filename_param = date_time()
-                os_check(filename_param)
+                windows_file_download(filename_param)
 
             elif command == "ls":
                 list_files()
