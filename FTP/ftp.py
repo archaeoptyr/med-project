@@ -7,7 +7,7 @@ from subprocess import Popen
 
 ftp = None
 
-def connect_ftp(hostname, username, password):
+def connect_ftp(hostname, username, password, cron):
     try:
         global ftp
         
@@ -16,7 +16,9 @@ def connect_ftp(hostname, username, password):
         ftp.login(username, password)
 
         print("Connected")
-        keep_conn(args)
+
+        if not cron:
+            keep_conn(args)
 
     
     except:
@@ -34,7 +36,7 @@ def keep_conn(cred):
     file_conn = open('ftp_conn.obj', 'wb')
     pickle.dump(cred, file_conn)
 
-def conn_exists():
+def conn_exists(cron):
     #Checks if the pickle file exists 
     if os.path.isfile("ftp_conn.obj"):
         if os.path.getsize("ftp_conn.obj") > 0:      
@@ -42,7 +44,7 @@ def conn_exists():
             conn = pickle.load(open_conn)
 
             #Connects to FTP using creds from pickle
-            connect_ftp(conn.hostname[0], conn.username[0], conn.password[0])
+            connect_ftp(conn.hostname[0], conn.username[0], conn.password[0], cron)
             #Stores creds for next time
             keep_conn(conn)
 
@@ -63,29 +65,45 @@ def format_date(date):
     return format_date
 
 def download_file(date, time):
-    #reformats date and time to match csv files
-    date_time = format_datetime(date, time)
-    date_time = date_time.strftime("%Y%m%d%H%M%S")
-    filename = "MED_DATA_" + str(date_time) + ".csv"
-    print(filename)
+    try:
+        
+        #reformats date and time to match csv files
+        date_time = format_datetime(date, time)
+        date_time = date_time.strftime("%Y%m%d%H%M%S")
+        
+        file_list = list_files()
+        file_needed = "MED_DATA_" + date_time[:-2]
 
-    #Downloads File    
-    with open(filename, "wb") as f:
-        ftp.retrbinary("RETR " + filename, f.write)
-        print("Successfully downloaded " + filename)
-    
+        for name in file_list:
+            #if the file in the server matches today's date
+            if file_needed in name:  
+
+                #Downloads File    
+                with open(name, "wb") as f:
+                    ftp.retrbinary("RETR " + str(name), f.write)
+                    print("Successfully downloaded " + name)
+
+    except AttributeError:
+        print("There is no such file")
+
+
 def download_file_default(date_now):
-    #downloads files from the current day if specific date is not specified
-    date = format_date(date_now)
-    file_list = list_files()
-    file_needed = "MED_DATA_" + date
-
-    for name in file_list:
-        #if the file in the server matches today's date
-        if file_needed in name:  
-            with open(name, "wb") as f:
-                ftp.retrbinary("RETR " + name, f.write)
-                print("Successfully downloaded " + name)
+    try:
+        #downloads files from the current day if specific date is not specified
+        date = format_date(date_now)
+        file_list = list_files()
+        file_needed = "MED_DATA_" + date
+        exists = False
+        for name in file_list:
+            #if the file in the server matches today's date
+            if file_needed in name:  
+                with open(name, "wb") as f:
+                    ftp.retrbinary("RETR " + name, f.write)
+                    exists = True
+                    print("Successfully downloaded " + name)
+    
+    except AttributeError:
+        print("There is no file with the current date")
 
 
 def list_files():
@@ -93,6 +111,7 @@ def list_files():
     list_of_files = ftp.nlst()
 
     return list_of_files
+
 
 def mac_osx(date, time):
     date_time = format_datetime(date, time)
@@ -177,7 +196,7 @@ def main():
                 print("Disconnected")
 
             #Checks if pickle exists from previous session
-            if conn_exists():
+            if conn_exists(False):
                 pass
 
             #If user is starting a new session
