@@ -1,4 +1,4 @@
-from ftp import conn_exists, download_file
+from ftp import download_file, conn_exists
 from datetime import datetime
 
 #gets current date and time
@@ -10,6 +10,7 @@ time = date_time.strftime("%H:%M:%S")
 
 #if there is still a connection to the server
 if(conn_exists(True)):
+    
     #download the file with the current date and time
     download_file(date, time)
 

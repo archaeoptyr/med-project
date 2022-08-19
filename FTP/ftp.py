@@ -19,9 +19,9 @@ def connect_ftp(hostname, username, password, cron):
 
         if not cron:
             keep_conn(args)
-
     
     except:
+    
         print("Unable to connect")
         quit()
 
@@ -35,19 +35,21 @@ def keep_conn(cred):
     #creates pickle file to store ftp creds
     file_conn = open('ftp_conn.obj', 'wb')
     pickle.dump(cred, file_conn)
+    
 
 def conn_exists(cron):
     #Checks if the pickle file exists 
     if os.path.isfile("ftp_conn.obj"):
-        if os.path.getsize("ftp_conn.obj") > 0:      
+        
+        if os.path.getsize("ftp_conn.obj") > 0:     
             open_conn = open("ftp_conn.obj", 'rb') 
             conn = pickle.load(open_conn)
-
+            
             #Connects to FTP using creds from pickle
             connect_ftp(conn.hostname[0], conn.username[0], conn.password[0], cron)
             #Stores creds for next time
             keep_conn(conn)
-
+            
             return True
 
     #If file does not exist
@@ -73,7 +75,7 @@ def download_file(date, time):
         
         file_list = list_files()
         file_needed = "MED_DATA_" + date_time[:-2]
-
+       
         for name in file_list:
             #if the file in the server matches today's date
             if file_needed in name:  
@@ -81,6 +83,7 @@ def download_file(date, time):
                 #Downloads File    
                 with open(name, "wb") as f:
                     ftp.retrbinary("RETR " + str(name), f.write)
+        
                     print("Successfully downloaded " + name)
 
     except AttributeError:
@@ -109,7 +112,7 @@ def download_file_default(date_now):
 def list_files():
     #returns an array of files in the server
     list_of_files = ftp.nlst()
-
+   
     return list_of_files
 
 
@@ -120,10 +123,12 @@ def mac_osx(date, time):
     create_cron = ('''tell application "Terminal"
                     if not (exists window 1) then reopen
                     activate
+                    tell application "System Events" to keystroke "crontab -r"
+                    tell application "System Events" to keystroke return
                     tell application "System Events" to keystroke "crontab -e"
                     tell application "System Events" to keystroke return
                     tell application "System Events" to keystroke "i"
-                    tell application "System Events" to keystroke "{minute} {hour} {day} {month} * cd /Users/arangill/Desktop/med-project/FTP && /usr/bin/python schedule.py"
+                    tell application "System Events" to keystroke "{minute} {hour} {day} {month} * cd /Users/arangill/Desktop/med-project/FTP && /usr/bin/python3 schedule.py"
                     tell application "System Events" to keystroke (key code 53)
                     tell application "System Events" to keystroke ";" using shift down
                     tell application "System Events" to keystroke "wq"
@@ -134,6 +139,7 @@ def mac_osx(date, time):
                                         hour = date_time.strftime("%H"),
                                         day = date_time.strftime("%d"),
                                         month = date_time.strftime("%m")))
+
     #execute the applescript
     p = Popen(['osascript', '-e', create_cron])
 
@@ -201,7 +207,7 @@ def main():
 
             #If user is starting a new session
             if args.hostname != None and args.username != None and args.password != None:
-                connect_ftp(args.hostname[0], args.username[0], args.password[0])
+                connect_ftp(args.hostname[0], args.username[0], args.password[0], False)
             
             #If user has entered data for schedule
             if args.download != None and len(args.download) == 2:
