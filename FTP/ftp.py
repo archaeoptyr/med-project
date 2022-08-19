@@ -1,9 +1,12 @@
 import argparse
+from asyncio import subprocess
 import pickle
 from ftplib import FTP
 import os
 from datetime import datetime
 from subprocess import Popen
+import sys
+from main import windows_file_download
 
 ftp = None
 
@@ -115,6 +118,12 @@ def list_files():
    
     return list_of_files
 
+def os_check(filename):
+    platform = sys.platform
+    # Checks users operating system and calls methods depending on said OS
+    if platform == "win32":
+        subprocess.call(["python", "main.py"])
+
 
 def mac_osx(date, time):
     date_time = format_datetime(date, time)
@@ -221,7 +230,9 @@ def main():
             
             if args.schedule != None and len(args.schedule) == 2:
                 mac_osx(args.schedule[0], args.schedule[1])
-                
+
+            if args.schedule != None and len(args.schedule) == 1:
+                os_check(args.schedule[0])
             
         
         except AttributeError:
